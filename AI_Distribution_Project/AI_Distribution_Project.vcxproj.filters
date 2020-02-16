@@ -18,5 +18,19 @@
     <ClCompile Include="AI_Distribution_Project.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Seller.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DistributionCentre.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Seller.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DistributionCentre.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

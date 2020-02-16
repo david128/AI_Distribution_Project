@@ -152,6 +152,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AI_Distribution_Project.cpp" />
+    <ClCompile Include="DistributionCentre.cpp" />
+    <ClCompile Include="Seller.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="DistributionCentre.h" />
+    <ClInclude Include="Seller.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

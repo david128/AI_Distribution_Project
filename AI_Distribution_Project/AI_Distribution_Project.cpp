@@ -1,20 +1,76 @@
-// AI_Distribution_Project.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
-
 #include <iostream>
+#include "Seller.h"
+#include "DistributionCentre.h"
+
+Seller sellers[3];
+DistributionCentre dist;
+int salesMissed;
+
+void SetUp()
+{
+	sellers[0] = Seller(250.0f, 20.0f, 3.0f);
+	sellers[1] = Seller(350.0f, 40.0f, 5.0f);
+	sellers[2] = Seller(400.0f, 50.0f, 10.0f);
+	Lorry lorry;
+	lorry.carryLimit = 50.0f;
+	lorry.daysUntilReturn = 0.0f;
+	lorry.carrying = 0.0f;
+	dist = DistributionCentre(500.0f, 300.0f, lorry);
+}
+
+void moveStock(int sellerID, int LorryID)
+{
+	if (dist.GetCurrentStock() >= dist.lorries[LorryID].carryLimit)
+	{
+		dist.RemoveStock(dist.lorries[LorryID].carryLimit);
+		dist.lorries[LorryID].carrying = dist.lorries[LorryID].carryLimit;
+
+	}
+	else
+	{
+		dist.lorries[LorryID].carrying = dist.GetCurrentStock();
+		dist.RemoveStock(dist.GetCurrentStock());
+	}
+	
+	dist.lorries[LorryID].daysUntilReturn = sellers[sellerID].GetTravelTime() * 2;
+}
+
+void deliverStock(int sellerID, int LorryID)
+{
+	float newStock = sellers[sellerID].GetStock() + dist.lorries[LorryID].carrying;
+	if (newStock <= sellers[sellerID].GetMaxStock())
+	{
+		sellers[sellerID].AddStock(dist.lorries[LorryID].carrying);
+		dist.lorries[LorryID].carrying = 0;
+
+	}
+	else
+	{
+		sellers[sellerID].SetStock(sellers[sellerID].GetMaxStock);
+		dist.lorries[LorryID].carrying = 0;
+	}
+}
+
+void sell(int sellerID)
+{
+	if (sellers[sellerID].GetStock >= sellers[sellerID].GetSalesPerDay())
+	{
+		sellers[sellerID].SellStock(sellers[sellerID].GetSalesPerDay());
+	}
+	else
+	{
+		salesMissed = sellers[sellerID].GetSalesPerDay() - sellers[sellerID].GetStock();
+	}
+	
+}
 
 int main()
 {
+	SetUp();
+
     std::cout << "Hello World!\n";
 }
 
-// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
-// Debug program: F5 or Debug > Start Debugging menu
 
-// Tips for Getting Started: 
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file
+
+
