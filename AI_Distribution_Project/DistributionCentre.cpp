@@ -4,10 +4,11 @@ DistributionCentre::DistributionCentre()
 {
 }
 
-DistributionCentre::DistributionCentre(float max, Lorry l)
+DistributionCentre::DistributionCentre(float max, float startingStock, Lorry l)
 {
 	lorries[0] = l;
 	lorries[1] = l;
 	maxStock = max;
+	currentStock = startingStock;
 
 }

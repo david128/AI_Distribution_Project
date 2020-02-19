@@ -15,6 +15,7 @@ public:
 	Seller(float max, float spd, float travel);
 
 	float GetStock() { return stock; }
+	float SetStock(float s) { stock = s; }
 	float AddStock(float s) { stock += s; }
 	float SellStock(float s) { stock -= s; }
 	float GetMaxStock() { return maxStock; }
