@@ -46,14 +46,14 @@ void deliverStock(int sellerID, int LorryID)
 	}
 	else
 	{
-		sellers[sellerID].SetStock(sellers[sellerID].GetMaxStock);
+		sellers[sellerID].SetStock(sellers[sellerID].GetMaxStock());
 		dist.lorries[LorryID].carrying = 0;
 	}
 }
 
 void sell(int sellerID)
 {
-	if (sellers[sellerID].GetStock >= sellers[sellerID].GetSalesPerDay())
+	if (sellers[sellerID].GetStock() >= sellers[sellerID].GetSalesPerDay())
 	{
 		sellers[sellerID].SellStock(sellers[sellerID].GetSalesPerDay());
 	}

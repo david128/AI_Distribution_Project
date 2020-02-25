@@ -21,8 +21,8 @@ public:
 
 	Lorry lorries[2];
 
-	float AddStock(float s) { currentStock += s; }
-	float RemoveStock(float s) { currentStock -= s; }
+	void AddStock(float s) { currentStock += s; }
+	void RemoveStock(float s) { currentStock -= s; }
 	float GetCurrentStock() { return currentStock; }
 	float GetMaxStock() { return maxStock; }
 	
