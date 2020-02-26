@@ -1,11 +1,24 @@
-#pragma once
+#pragma 
+
+enum Phase
+{
+	IDLE = 0,
+	MOVING = 1,
+	RETURNING = 2,
+	ARRIVED = 3
+};
+
 
 struct Lorry
 {
-	float daysUntilReturn;
+	float daysUntilArrive;
 	float carryLimit;
 	float carrying;
+	Phase phase;
+	int sellerID;
 };
+
+
 
 class DistributionCentre
 {
