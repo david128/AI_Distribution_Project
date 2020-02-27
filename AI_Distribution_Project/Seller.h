@@ -18,6 +18,7 @@ public:
 	void SetStock(float s) { stock = s; }
 	void AddStock(float s) { stock += s; }
 	void SellStock(float s) { stock -= s; }
+	float GetPercentageFull() ;
 	float GetMaxStock() { return maxStock; }
 	float GetSalesPerDay() { return salesPerDay; }
 	float GetTravelTime() { return travelTime; }

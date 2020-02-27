@@ -9,13 +9,27 @@ using namespace std;
 Seller sellers[3];
 DistributionCentre dist;
 int numOfSellers = 3;
-int salesMissed;
+float salesMissed[3];
+
+float stockLow = 50.0f;
+float farDist = 3.0f;
+float highSPD = 10.0f;
+
+struct DecisionData
+{
+	float stockPer;
+	float dist;
+	float spd;
+	bool deliveryOnItsWay;
+};
+
+
 
 void SetUp()
 {
 	sellers[0] = Seller(350.0f, 5.0f, 2.0f);
 	sellers[1] = Seller(450.0f, 10.0f, 4.0f);
-	sellers[2] = Seller(800.0f, 15.0f, 6.0f);
+	sellers[2] = Seller(800.0f, 20.0f, 6.0f);
 	Lorry lorry;
 	lorry.carryLimit = 200.0f;
 	lorry.daysUntilArrive = 0.0f;
@@ -26,17 +40,7 @@ void SetUp()
 
 void MoveStock(int sellerID, int LorryID)
 {
-	//if (dist.GetCurrentStock() >= dist.lorries[LorryID].carryLimit)
-	//{
-	//	dist.RemoveStock(dist.lorries[LorryID].carryLimit);
-	//	dist.lorries[LorryID].carrying = dist.lorries[LorryID].carryLimit;
 
-	//}
-	//else
-	//{
-	//	dist.lorries[LorryID].carrying = dist.GetCurrentStock();
-	//	dist.RemoveStock(dist.GetCurrentStock());
-	//}
 	
 	dist.lorries[LorryID].carrying = dist.lorries[LorryID].carryLimit;
 
@@ -47,6 +51,7 @@ void MoveStock(int sellerID, int LorryID)
 
 	std::cout << ("Truck " + to_string(LorryID + 1) + " has been dispatched to shop " + to_string(dist.lorries[LorryID].sellerID + 1) + " carrying  " + to_string(dist.lorries[LorryID].carrying) + " stock and will arrive in " + to_string(dist.lorries[LorryID].daysUntilArrive) + " days\n");
 }
+
 
 void DeliverStock(int sellerID, int LorryID)
 {
@@ -84,11 +89,86 @@ void Sell(int sellerID)
 		cout << (" stock, sold " + to_string(sellers[sellerID].GetStock()));
 		
 		int sm = sellers[sellerID].GetSalesPerDay() - sellers[sellerID].GetStock();
-		salesMissed += sm;
+		salesMissed[sellerID] += sm;
 		sellers[sellerID].SellStock(sellers[sellerID].GetStock());
 		cout << (" stock ended with " + to_string(sellers[sellerID].GetStock()) + "stock, missing "+ to_string(sm )+" sales\n");
 	}
 	
+}
+
+DecisionData GetDecisionData(int sellerID)
+{
+	DecisionData decisionData;
+
+	decisionData.stockPer = sellers[sellerID].GetPercentageFull();
+	decisionData.dist = sellers[sellerID].GetTravelTime();
+	decisionData.spd = sellers[sellerID].GetSalesPerDay();
+	decisionData.deliveryOnItsWay = false;
+	for (int i = 0; i < 2; i++)
+	{
+		if (dist.lorries[i].phase == MOVING && dist.lorries[i].sellerID == sellerID)
+		{
+			decisionData.deliveryOnItsWay = true;
+		}
+	}
+	
+	return decisionData;
+}
+
+void RuleBased(int lorryID)
+{
+	float urgency[3] = { 0 };
+	//check sellers and give each a value for how urgent they need a delivery
+	for (int i = 0; i < numOfSellers; i++)
+	{
+		DecisionData d = GetDecisionData(i);
+		if (d.stockPer < stockLow)
+		{
+			urgency[i] += 3;
+		}
+		else
+		{
+			urgency[i] -= 3;
+		}
+
+		if (d.dist > farDist)
+		{
+			urgency[i] += 1;
+		}
+		else
+		{
+			urgency[i] -= 1;
+		}
+
+		if (d.spd > highSPD)
+		{
+			urgency[i] += 1;
+		}
+		else
+		{
+			urgency[i] -= 1;
+		}
+
+		if (d.deliveryOnItsWay == false)
+		{
+			urgency[i] += 1;
+		}
+		else
+		{
+			urgency[i] -= 1;
+		}
+	}
+
+	int mostUrgent = 0;
+	for (int i = 1; i < numOfSellers; i++)
+	{
+		if (urgency[mostUrgent] < urgency[i])
+		{
+			mostUrgent = i;
+		}
+	}
+
+	MoveStock(mostUrgent, lorryID);
 }
 
 void RandomPlaceholder(int lorryID)
@@ -104,7 +184,8 @@ void CheckLorries()
 	{
 		if (dist.lorries[i].phase == IDLE)
 		{
-			RandomPlaceholder(i);
+			//RandomPlaceholder(i);
+			RuleBased(i);
 		}
 		else if (dist.lorries[i].phase == MOVING)
 		{
@@ -164,7 +245,7 @@ int main()
 	srand(std::time(nullptr));
 
 	SetUp();
-	int daysToProcess = 365;
+	float daysToProcess = 365;
 	
 	//processDays 
 	for (int i = 1; i <= daysToProcess; i++)
@@ -174,7 +255,19 @@ int main()
 		std::cout << ("\n");
 	}
 
-	cout << ("\n TOTAl SALES MISSED: " + to_string(salesMissed) + "\n");
+	float total = 0;
+	for (int i = 0; i < numOfSellers; i++)
+	{
+		cout << ("\nSALES MISSED: " + to_string(salesMissed[i]) + "in shop " + to_string(i+1)+"\n");
+		cout << ("\nSALES MISSED PER DAY: " + to_string(salesMissed[i] / daysToProcess) + " in shop " + to_string(i + 1) + "\n");
+		total += salesMissed[i];
+		std::cout << ("\n");
+	}
+
+	std::cout << ("------------------------------------------\n");
+
+	cout << ("\nTOTAl SALES MISSED: " + to_string(total) + "\n");
+	cout << ("\nTOTAL SALES MISSED PER DAY: " + to_string(total/daysToProcess) + "\n");
    
 }
 

@@ -12,3 +12,8 @@ Seller::Seller(float max, float spd, float travel)
 	travelTime = travel;
 	stock = maxStock / 2;
 }
+
+float Seller::GetPercentageFull()
+{
+	return ((stock / maxStock) * 100.0f);
+}
