@@ -1,0 +1,4 @@
+//Import from FIS
+Engine* engine = fl::FisImporter().fromFile("/path/to/yourfile.fis");
+//Export to C++ file
+fl::CppExporter().toFile(engine, "/path/to/yourfile.cpp");
