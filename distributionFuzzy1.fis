@@ -1,0 +1,74 @@
+[System]
+Name='distributionFuzzy1'
+Type='mamdani'
+Version=2.0
+NumInputs=4
+NumOutputs=1
+NumRules=15
+AndMethod='min'
+OrMethod='max'
+ImpMethod='min'
+AggMethod='max'
+DefuzzMethod='centroid'
+
+[Input1]
+Name='Stock'
+Range=[0 100]
+NumMFs=5
+MF1='Empty':'trimf',[-25 0 15]
+MF2='Low':'trimf',[10.3 25.6 50.6]
+MF3='Medium':'trimf',[30 50 70]
+MF4='WellStocked':'trimf',[50 75 90]
+MF5='Full':'trimf',[85 100 125]
+
+[Input2]
+Name='Distance'
+Range=[0 6]
+NumMFs=3
+MF1='Close':'trimf',[-3 5.551e-17 3]
+MF2='MediumDistance':'trimf',[1.5 3 4.5]
+MF3='Far':'trimf',[3 6 9]
+
+[Input3]
+Name='SalesPerDay'
+Range=[0 20]
+NumMFs=3
+MF1='Low':'trimf',[-8 0 8]
+MF2='Moderate':'trimf',[4 10 16.0111317254174]
+MF3='High':'trimf',[12 20 28]
+
+[Input4]
+Name='DeliveryOnItsWay'
+Range=[0 7]
+NumMFs=4
+MF1='Soon':'trimf',[-2.5 0 2.5]
+MF2='OnItsWay':'trimf',[1.5 2.5 5]
+MF3='NotSoon':'trimf',[4 5 6]
+MF4='NoDelivery':'trimf',[6 7 9.35]
+
+[Output1]
+Name='output1'
+Range=[0 1]
+NumMFs=5
+MF1='VeryLow':'trimf',[-0.25 0 0.25]
+MF2='Low':'trimf',[0 0.25 0.5]
+MF3='Average':'trimf',[0.25 0.5 0.75]
+MF4='High':'trimf',[0.5 0.75 1]
+MF5='VeryHigh':'trimf',[0.75 1 1.25]
+
+[Rules]
+1 0 0 0, 5 (1) : 1
+2 0 0 0, 4 (1) : 1
+3 0 0 0, 3 (1) : 1
+4 0 0 0, 2 (1) : 1
+5 0 0 0, 1 (1) : 1
+0 1 0 0, 2 (1) : 1
+0 2 0 0, 3 (1) : 1
+0 3 0 0, 4 (1) : 1
+0 0 1 0, 2 (1) : 1
+0 0 2 0, 3 (1) : 1
+0 0 3 0, 4 (1) : 1
+0 0 0 1, 1 (1) : 1
+0 0 0 2, 2 (1) : 1
+0 0 0 3, 3 (1) : 1
+0 0 0 4, 4 (1) : 1
