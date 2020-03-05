@@ -4,10 +4,14 @@ DistributionCentre::DistributionCentre()
 {
 }
 
-DistributionCentre::DistributionCentre(float max, float startingStock, Lorry l)
+DistributionCentre::DistributionCentre(float max, float startingStock, Lorry l, int numOfLorries)
 {
-	lorries[0] = l;
-	lorries[1] = l;
+	for (int i = 0; i < numOfLorries; i++)
+	{
+		lorries.push_back(l);
+	}
+	
+	
 	maxStock = max;
 	currentStock = startingStock;
 

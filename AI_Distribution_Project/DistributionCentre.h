@@ -1,5 +1,8 @@
+#include <vector>
 #pragma 
 
+
+using namespace std;
 enum Phase
 {
 	IDLE = 0,
@@ -30,9 +33,9 @@ public:
 
 	DistributionCentre();
 
-	DistributionCentre(float max, float startingStock, Lorry l);
-
-	Lorry lorries[2];
+	DistributionCentre(float max, float startingStock, Lorry l, int numOfLorries);
+	
+	vector<Lorry> lorries;
 
 	void AddStock(float s) { currentStock += s; }
 	void RemoveStock(float s) { currentStock -= s; }

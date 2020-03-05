@@ -3,15 +3,19 @@
 #include "DistributionCentre.h"
 #include <string>
 #include <ctime>
+#include <fstream>
 #include "fl/Headers.h"
 
 using namespace std;
 using namespace fl;
 
-Seller sellers[3];
+
+vector<Seller> sellers;
 DistributionCentre dist;
-int numOfSellers = 3;
-float salesMissed[3];
+int numOfSellers = 0;
+int numOfLorries = 0;
+vector<float> salesMissed;
+
 
 float stockLow = 50.0f;
 float farDist = 3.0f;
@@ -41,22 +45,38 @@ struct FuzzyDecisionData
 	float deliveryOnItsWay;
 };
 
-
-
-void SetUp()
+void ReadInFiles()
 {
 
+	std::ifstream sellersFile("sellers.txt");
+	std::ifstream lorryFile("lorries.txt");
+	float sm = 0;
+	string a, b, c;
+	
+	while(sellersFile >> a >> b >> c)
+	{
+		
+		cout << a << b << c;
+		
+		sellers.push_back(Seller(stof(a), stof(b), stof(c)));
+		salesMissed.push_back(sm);
+	}
 
-	sellers[0] = Seller(350.0f, 5.0f, 2.0f);
-	sellers[1] = Seller(450.0f, 10.0f, 4.0f);
-	sellers[2] = Seller(800.0f, 20.0f, 6.0f);
+
 	Lorry lorry;
-	lorry.carryLimit = 200.0f;
+	
+
+	lorryFile >> lorry.carryLimit >> numOfLorries;
 	lorry.daysUntilArrive = 0.0f;
 	lorry.carrying = 0.0f;
 	lorry.phase = IDLE;
-	dist = DistributionCentre(500.0f, 300.0f, lorry);
+	dist = DistributionCentre(500.0f, 300.0f, lorry, numOfLorries);
+
+
+	numOfSellers = sellers.size();
 }
+
+
 
 void MoveStock(int sellerID, int LorryID)
 {
@@ -124,7 +144,7 @@ DecisionData GetDecisionData(int sellerID)
 	decisionData.dist = sellers[sellerID].GetTravelTime();
 	decisionData.spd = sellers[sellerID].GetSalesPerDay();
 	decisionData.deliveryOnItsWay = false;
-	for (int i = 0; i < 2; i++)
+	for (int i = 0; i < numOfLorries; i++)
 	{
 		if (dist.lorries[i].phase == MOVING && dist.lorries[i].sellerID == sellerID)
 		{
@@ -143,14 +163,26 @@ FuzzyDecisionData GetFuzzyDecisionData(int sellerID)
 	decisionData.dist = sellers[sellerID].GetTravelTime();
 	decisionData.spd = sellers[sellerID].GetSalesPerDay();
 	decisionData.deliveryOnItsWay = 7;
-	for (int i = 0; i < 2; i++)
+	float num = 0;
+	for (int i = 0; i < numOfLorries; i++)
 	{
 		
-		if (dist.lorries[i].phase == MOVING && dist.lorries[i].sellerID == sellerID && dist.lorries[i].daysUntilArrive < decisionData.deliveryOnItsWay)
+		if (dist.lorries[i].phase == MOVING && dist.lorries[i].sellerID == sellerID )
 		{
-			decisionData.deliveryOnItsWay = dist.lorries[i].daysUntilArrive;
+			num++;
+			if (dist.lorries[i].daysUntilArrive < decisionData.deliveryOnItsWay)
+			{
+				decisionData.deliveryOnItsWay = dist.lorries[i].daysUntilArrive;
+			}
+			
 		}
 	}
+
+	if (num != 0)
+	{
+		decisionData.deliveryOnItsWay = decisionData.deliveryOnItsWay / num;
+	}
+
 
 	return decisionData;
 }
@@ -257,7 +289,7 @@ void SetUpFuzzyLogic()
 
 void runFuzzyLogic(int lorryID)
 {
-	float lorryUrgency[3] = { 0 };
+	vector<float> sellerUrgency;
 	for (int i = 0; i < numOfSellers; i++)
 	{
 		FuzzyDecisionData d = GetFuzzyDecisionData(i);
@@ -270,29 +302,31 @@ void runFuzzyLogic(int lorryID)
 		engine->process();
 
 
-		lorryUrgency[i] = urgency->getValue();
+		sellerUrgency.push_back(urgency->getValue());
 		
 	}
 	
 	int mostUrgent = 0;
 	for (int i = 1; i < numOfSellers; i++)
 	{
-		if (lorryUrgency[mostUrgent] < lorryUrgency[i])
+		if (sellerUrgency[mostUrgent] < sellerUrgency[i])
 		{
 			mostUrgent = i;
 		}
 	}
 
 	MoveStock(mostUrgent, lorryID);
-
+	
 }
 
 void RuleBased(int lorryID)
 {
-	float urgency[3] = { 0 };
+	vector<float> urgency = { 0 };
 	//check sellers and give each a value for how urgent they need a delivery
 	for (int i = 0; i < numOfSellers; i++)
 	{
+		float thisUrgency = 0;
+		urgency.push_back(thisUrgency);
 		DecisionData d = GetDecisionData(i);
 		if (d.stockPer < stockLow)
 		{
@@ -352,7 +386,7 @@ void RandomPlaceholder(int lorryID)
 
 void CheckLorries()
 {
-	for (int i = 0; i < 2; i++)
+	for (int i = 0; i < numOfLorries; i++)
 	{
 		if (dist.lorries[i].phase == IDLE)
 		{
@@ -417,7 +451,7 @@ int main()
 {
 	srand(std::time(nullptr));
 
-	SetUp();
+	ReadInFiles();
 	SetUpFuzzyLogic();
 	float daysToProcess = 365;
 	
