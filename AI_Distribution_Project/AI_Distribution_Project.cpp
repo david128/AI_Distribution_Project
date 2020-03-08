@@ -56,7 +56,7 @@ void ReadInFiles()
 	while(sellersFile >> a >> b >> c)
 	{
 		
-		cout << a << b << c;
+		
 		
 		sellers.push_back(Seller(stof(a), stof(b), stof(c)));
 		salesMissed.push_back(sm);
@@ -370,6 +370,7 @@ void RuleBased(int lorryID)
 	{
 		if (urgency[mostUrgent] < urgency[i])
 		{
+			
 			mostUrgent = i;
 		}
 	}
