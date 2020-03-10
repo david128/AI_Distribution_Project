@@ -9,18 +9,29 @@
 using namespace std;
 using namespace fl;
 
+//bool for which system to use
+bool fuzzy;
 
+//sellers vector
 vector<Seller> sellers;
+
+//holds information about distribution and lorries
 DistributionCentre dist;
+
+//num of sellers and lorries
 int numOfSellers = 0;
 int numOfLorries = 0;
+
+//sales missed for each seller
 vector<float> salesMissed;
 
-
+//values to compare to in rules
 float stockLow = 50.0f;
 float farDist = 3.0f;
 float highSPD = 10.0f;
 
+
+//fuzzy variables for fuzzy lite engine
 Engine* engine = new Engine;
 InputVariable* Stock = new InputVariable;
 InputVariable* Distance = new InputVariable;
@@ -29,6 +40,8 @@ InputVariable* DeliveryOnItsWay = new InputVariable;
 OutputVariable* urgency = new OutputVariable;
 RuleBlock* ruleBlock = new RuleBlock;
 
+
+//data for rbs
 struct DecisionData
 {
 	float stockPer;
@@ -37,6 +50,7 @@ struct DecisionData
 	bool deliveryOnItsWay;
 };
 
+//data for fuzzy system
 struct FuzzyDecisionData
 {
 	float stockPer;
@@ -45,68 +59,72 @@ struct FuzzyDecisionData
 	float deliveryOnItsWay;
 };
 
+
+//read in files with data for sellers and lorries
 void ReadInFiles()
 {
-
+	//files
 	std::ifstream sellersFile("sellers.txt");
 	std::ifstream lorryFile("lorries.txt");
-	float sm = 0;
-	string a, b, c;
 	
-	while(sellersFile >> a >> b >> c)
+	float sm = 0; //starting value for sales missed
+	string a, b, c; //temp storage
+	
+	while(sellersFile >> a >> b >> c) //read first 3 seperated values until end of file
 	{
-		
-		
-		
-		sellers.push_back(Seller(stof(a), stof(b), stof(c)));
-		salesMissed.push_back(sm);
+
+		sellers.push_back(Seller(stof(a), stof(b), stof(c))); //add to list seller with values read 
+		salesMissed.push_back(sm); //add sales missed
 	}
 
 
-	Lorry lorry;
-	
+	Lorry lorry; // create lorry 	
 
-	lorryFile >> lorry.carryLimit >> numOfLorries;
+	lorryFile >> lorry.carryLimit >> numOfLorries; //read from lorry file, carry limit and number of lorries
+
+	//set default values
 	lorry.daysUntilArrive = 0.0f;
 	lorry.carrying = 0.0f;
 	lorry.phase = IDLE;
-	dist = DistributionCentre(500.0f, 300.0f, lorry, numOfLorries);
+	dist = DistributionCentre(500.0f, 300.0f, lorry, numOfLorries);//create distribution centre
 
 
-	numOfSellers = sellers.size();
+	numOfSellers = sellers.size(); //num of sellers is the size of sellers vector
 }
 
 
 
+// start process of moving from dist centre to seller 
 void MoveStock(int sellerID, int LorryID)
 {
 
 	
-	dist.lorries[LorryID].carrying = dist.lorries[LorryID].carryLimit;
+	dist.lorries[LorryID].carrying = dist.lorries[LorryID].carryLimit; //carry carry limit amount of stock
 
 
-	dist.lorries[LorryID].daysUntilArrive = sellers[sellerID].GetTravelTime();
-	dist.lorries[LorryID].sellerID = sellerID;
-	dist.lorries[LorryID].phase = MOVING;
+	dist.lorries[LorryID].daysUntilArrive = sellers[sellerID].GetTravelTime(); //set days until arrival to full travel time
+	dist.lorries[LorryID].sellerID = sellerID; //set sellerID to ID traveling to
+	dist.lorries[LorryID].phase = MOVING; //set phase to moving
 
-	std::cout << ("Truck " + to_string(LorryID + 1) + " has been dispatched to shop " + to_string(dist.lorries[LorryID].sellerID + 1) + " carrying  " + to_string(dist.lorries[LorryID].carrying) + " stock and will arrive in " + to_string(dist.lorries[LorryID].daysUntilArrive) + " days\n");
+	std::cout << fixed << setprecision(0) << "Truck "  << (LorryID + 1) << " has been dispatched to shop " << (dist.lorries[LorryID].sellerID + 1) << " carrying  " << (dist.lorries[LorryID].carrying) << " stock and will arrive in " << (dist.lorries[LorryID].daysUntilArrive) << " days\n"; //output message summarising what is happening
 }
 
 
-void DeliverStock(int sellerID, int LorryID)
+void DeliverStock(int sellerID, int LorryID) //when arriving add to stock
 {
-	float newStock = sellers[sellerID].GetStock() + dist.lorries[LorryID].carrying;
+	//check if new stock will be higher than max stock, if higher then set stock to max stock, else add carrying to current stock
+	float newStock = sellers[sellerID].GetStock() + dist.lorries[LorryID].carrying; 
 	if (newStock <= sellers[sellerID].GetMaxStock())
 	{
 		sellers[sellerID].AddStock(dist.lorries[LorryID].carrying);
-		std::cout << ("Truck " + to_string(LorryID + 1) + " has delivered " + to_string(dist.lorries[LorryID].carrying ) + " to shop " + to_string(dist.lorries[LorryID].sellerID + 1) + "\n");
+		std::cout << fixed << setprecision(0) << "Truck "  << (LorryID + 1) << " has delivered " <<(dist.lorries[LorryID].carrying ) <<  " to shop "<< (dist.lorries[LorryID].sellerID + 1) << "\n";
 		dist.lorries[LorryID].carrying = 0;
 
 	}
 	else
 	{
 		
-		std::cout << ("Truck " + to_string(LorryID + 1) + " has delivered " + to_string((sellers[sellerID].GetMaxStock() - sellers[sellerID].GetStock())) + " to shop " + to_string(dist.lorries[LorryID].sellerID + 1) + "\n");
+		std::cout << fixed << setprecision(0) << "Truck " << LorryID + 1 << " has delivered " <<((sellers[sellerID].GetMaxStock() - sellers[sellerID].GetStock())) << " to shop " << (dist.lorries[LorryID].sellerID + 1) << "\n";
 		sellers[sellerID].SetStock(sellers[sellerID].GetMaxStock());
 		dist.lorries[LorryID].carrying = 0;
 	}
@@ -116,33 +134,37 @@ void DeliverStock(int sellerID, int LorryID)
 
 void Sell(int sellerID)
 {
-	cout << ("Shop " + to_string(sellerID+1) + " started with "  +  to_string(sellers[sellerID].GetStock()));
+	cout << fixed << setprecision(0) << "Shop " << (sellerID+1) << " started with " << (sellers[sellerID].GetStock()); //start of message
 
-	if (sellers[sellerID].GetStock() >= sellers[sellerID].GetSalesPerDay())
+	if (sellers[sellerID].GetStock() >= sellers[sellerID].GetSalesPerDay()) //if stock is >= to spd then no sales are missed, else sales have been missed
 	{
-		cout << (" stock, sold " + to_string(sellers[sellerID].GetSalesPerDay()));
+		cout << fixed << setprecision(0) << " stock, sold " << (sellers[sellerID].GetSalesPerDay()); //output stock sold
 		sellers[sellerID].SellStock(sellers[sellerID].GetSalesPerDay());
-		cout << (" stock and ended with " + to_string(sellers[sellerID].GetStock()) + "stock, missing 0 sales\n");
+		cout << fixed << setprecision(0) << " stock and ended with " <<  (sellers[sellerID].GetStock()) << " stock, missing 0 sales\n"; //end of message with no sales missed
 	}
 	else
 	{
-		cout << (" stock, sold " + to_string(sellers[sellerID].GetStock()));
+		cout << fixed << setprecision(0) << " stock, sold " << (sellers[sellerID].GetStock()); //output stock sold
 		
+		//end of message with no sales missed
 		int sm = sellers[sellerID].GetSalesPerDay() - sellers[sellerID].GetStock();
 		salesMissed[sellerID] += sm;
-		sellers[sellerID].SellStock(sellers[sellerID].GetStock());
-		cout << (" stock ended with " + to_string(sellers[sellerID].GetStock()) + "stock, missing "+ to_string(sm )+" sales\n");
+		sellers[sellerID].SellStock(sellers[sellerID].GetStock()); //sell stock
+		cout << fixed << setprecision(0) << " stock ended with " << (sellers[sellerID].GetStock()) << " stock, missing "+ to_string(sm ) << " sales\n"; //end of message with sales missed value
 	}
 	
 }
 
-DecisionData GetDecisionData(int sellerID)
+DecisionData GetDecisionData(int sellerID)// get rbs data
 {
 	DecisionData decisionData;
 
-	decisionData.stockPer = sellers[sellerID].GetPercentageFull();
+	//get stock full percentage, distance, sales per day
+	decisionData.stockPer = sellers[sellerID].GetPercentageFull(); 
 	decisionData.dist = sellers[sellerID].GetTravelTime();
 	decisionData.spd = sellers[sellerID].GetSalesPerDay();
+
+	//check if delivery ison its way to seller
 	decisionData.deliveryOnItsWay = false;
 	for (int i = 0; i < numOfLorries; i++)
 	{
@@ -155,14 +177,19 @@ DecisionData GetDecisionData(int sellerID)
 	return decisionData;
 }
 
-FuzzyDecisionData GetFuzzyDecisionData(int sellerID)
+FuzzyDecisionData GetFuzzyDecisionData(int sellerID) // get fuzzy system data
 {
 	FuzzyDecisionData decisionData;
 	
+	//get stock full percentage, distance, sales per day
 	decisionData.stockPer = sellers[sellerID].GetPercentageFull();
 	decisionData.dist = sellers[sellerID].GetTravelTime();
 	decisionData.spd = sellers[sellerID].GetSalesPerDay();
+
+	//check if delivery is on its way, if none return 7
 	decisionData.deliveryOnItsWay = 7;
+	
+	//if 1 return days until arrival, if multiple return lowest days until arrival / amount of deliveries on the way
 	float num = 0;
 	for (int i = 0; i < numOfLorries; i++)
 	{
@@ -189,9 +216,10 @@ FuzzyDecisionData GetFuzzyDecisionData(int sellerID)
 
 void SetUpFuzzyLogic()
 {
+	//using system created in matlab fuzzy toolbox exported as fis
+	//imported to fl library and then exported into the following c++ code
 
 	//Code automatically generated with fuzzylite 6.0.
-
 
 	
 	engine->setName("distributionFuzzy1");
@@ -287,25 +315,30 @@ void SetUpFuzzyLogic()
 	
 }
 
-void runFuzzyLogic(int lorryID)
+void runFuzzyLogic(int lorryID)//fuzzy system
 {
-	vector<float> sellerUrgency;
+
+	vector<float> sellerUrgency;// urgency of each seller
+
+	//check each seller urgency value
 	for (int i = 0; i < numOfSellers; i++)
 	{
-		FuzzyDecisionData d = GetFuzzyDecisionData(i);
+		FuzzyDecisionData d = GetFuzzyDecisionData(i); //get data 
 
+		//set values from data
 		Stock->setValue(d.stockPer);
 		Distance->setValue(d.dist);
 		SalesPerDay->setValue(d.spd);
 		DeliveryOnItsWay->setValue(d.deliveryOnItsWay);
 
-		engine->process();
+		engine->process(); //process data in fuzzy engine
 
 
-		sellerUrgency.push_back(urgency->getValue());
+		sellerUrgency.push_back(urgency->getValue()); // add urgency
 		
 	}
 	
+	//find most urgent
 	int mostUrgent = 0;
 	for (int i = 1; i < numOfSellers; i++)
 	{
@@ -315,6 +348,7 @@ void runFuzzyLogic(int lorryID)
 		}
 	}
 
+	//move to most urgent
 	MoveStock(mostUrgent, lorryID);
 	
 }
@@ -322,7 +356,7 @@ void runFuzzyLogic(int lorryID)
 void RuleBased(int lorryID)
 {
 	vector<float> urgency = { 0 };
-	//check sellers and give each a value for how urgent they need a delivery
+	//check sellers and give each a value for how urgent they need a delivery based on rules
 	for (int i = 0; i < numOfSellers; i++)
 	{
 		float thisUrgency = 0;
@@ -365,6 +399,7 @@ void RuleBased(int lorryID)
 		}
 	}
 
+	//find most urgent
 	int mostUrgent = 0;
 	for (int i = 1; i < numOfSellers; i++)
 	{
@@ -375,13 +410,15 @@ void RuleBased(int lorryID)
 		}
 	}
 
+	//move stock to most urgent seller
 	MoveStock(mostUrgent, lorryID);
 }
 
+//placeholder for AI which randomly chooses a seller
 void RandomPlaceholder(int lorryID)
 {
 	
-	MoveStock((rand() % 3),lorryID);
+	MoveStock((rand() % numOfSellers),lorryID);
 	
 }
 
@@ -389,21 +426,30 @@ void CheckLorries()
 {
 	for (int i = 0; i < numOfLorries; i++)
 	{
-		if (dist.lorries[i].phase == IDLE)
+		if (dist.lorries[i].phase == IDLE) //if a lorry is idle then make a decision on where to send it
 		{
-			//RandomPlaceholder(i);
-			//RuleBased(i);
-			runFuzzyLogic(i);
-		}
-		else if (dist.lorries[i].phase == MOVING)
-		{
-			if (dist.lorries[i].daysUntilArrive > 1)
+			//based on input choose system		
+			if (fuzzy == true)
 			{
-				dist.lorries[i].daysUntilArrive -= 1;
-				std::cout << ("Truck  " + to_string(i+1) + " is on its way to shop " + to_string(dist.lorries[i].sellerID+1) + " will arrive in " + to_string(dist.lorries[i].daysUntilArrive)  +" days\n");
+				runFuzzyLogic(i);
 			}
 			else
 			{
+				RuleBased(i);
+			}
+
+		}
+		else if (dist.lorries[i].phase == MOVING)
+		{
+			//if moving, remove one from days until arrival
+			if (dist.lorries[i].daysUntilArrive > 1)
+			{
+				dist.lorries[i].daysUntilArrive -= 1;
+				std::cout << fixed << setprecision(0) << "Truck  " << (i+1) << " is on its way to shop " << (dist.lorries[i].sellerID+1) << " will arrive in " << (dist.lorries[i].daysUntilArrive)  << " days\n";
+			}
+			else
+			{
+				//if arrived set phase to arrived
 				dist.lorries[i].daysUntilArrive -= 1;
 				DeliverStock(dist.lorries[i].sellerID,i);
 				dist.lorries[i].phase = ARRIVED;
@@ -411,21 +457,24 @@ void CheckLorries()
 		}
 		else if (dist.lorries[i].phase == ARRIVED)
 		{
+			//if arrived, return
 			dist.lorries[i].daysUntilArrive = sellers[dist.lorries[i].sellerID].GetTravelTime();
-			std::cout << ("Truck  " + to_string(i + 1) + " is returning from shop " + to_string(dist.lorries[i].sellerID+1) + " and will arrive in " + to_string(dist.lorries[i].daysUntilArrive) + " days\n");
+			std::cout << fixed << setprecision(0) << "Truck  " << (i + 1) << " is returning from shop " << (dist.lorries[i].sellerID+1) << " and will arrive in " << (dist.lorries[i].daysUntilArrive) << " days\n";
 			dist.lorries[i].phase = RETURNING;
 		}
 		else if (dist.lorries[i].phase == RETURNING)
 		{
+			//if returning, remove one from days until arrival
 			if (dist.lorries[i].daysUntilArrive > 1)
 			{
 				dist.lorries[i].daysUntilArrive -= 1;
-				std::cout << ("Truck  " + to_string(i + 1) + " is returning from shop " + to_string(dist.lorries[i].sellerID+1) + " and will arrive in " + to_string(dist.lorries[i].daysUntilArrive) + " days\n");
+				std::cout  << fixed << setprecision(0) << "Truck  "<< (i + 1) << " is returning from shop " << (dist.lorries[i].sellerID+1) << " and will arrive in "<< (dist.lorries[i].daysUntilArrive) << " days\n";
 			}
 			else
 			{
+				//if returned then set to idle
 				dist.lorries[i].daysUntilArrive -= 1;
-				std::cout << ("Truck  " + to_string(i + 1) + " has returned from shop " + to_string(dist.lorries[i].sellerID +1) + " and is waiting to be dispatched\n");
+				std::cout << fixed << setprecision(0) << "Truck  "  << (i + 1)<<" has returned from shop " << to_string(dist.lorries[i].sellerID +1) << " and is waiting to be dispatched\n";
 				dist.lorries[i].phase = IDLE;
 			}
 		}
@@ -433,12 +482,13 @@ void CheckLorries()
 
 }
 
-
+//process of each day
 void ProcessDay()
 {
-	//CheckLorries
+	//CheckLorries 
 	CheckLorries();
-	//Sell
+	
+	//each seller sells based on SPD(sales per day)
 	for (int i = 0; i < numOfSellers; i++)
 	{
 		Sell(i);
@@ -450,34 +500,69 @@ void ProcessDay()
 
 int main()
 {
+
+
 	srand(std::time(nullptr));
 
+	//keep asking for input until correct input(case insensitve) is entered
+	string input = "";
+	cout << "Please enter either rule or r to use rule based or fuzzy or f to use fuzzy logic: ";
+	while (input == "")
+	{
+		cin >> input;
+		transform(input.begin(), input.end(), input.begin(),[](unsigned char c) { return std::tolower(c); });
+
+		if (input == "f" || input == "fuzzy")
+		{
+			fuzzy = true;
+		}
+		else if (input == "r" || input == "rule")
+		{
+			fuzzy = false;
+		}
+		else
+		{
+			cout << "Error: Please enter either rule or r to use rule based or fuzzy or f to use fuzzy logic: ";
+			input = "";
+		}
+	}
+
+	//read in files
 	ReadInFiles();
+	//set up fuzzy logic requirements
 	SetUpFuzzyLogic();
+
+	//days to process(365 =one year)
 	float daysToProcess = 365;
 	
-	//processDays 
+	std::cout << std::fixed;
+	std::cout << std::setprecision(0);
+
+	//processDays  
 	for (int i = 1; i <= daysToProcess; i++)
 	{
-		std::cout << ("Day " + to_string(i) + ":\n\n") ;
+		std::cout << ("Day " + to_string(i) + ":\n\n") ; //output day
 		ProcessDay();
 		std::cout << ("\n");
 	}
 
+	//output sales missed for each shop
 	float total = 0;
 	for (int i = 0; i < numOfSellers; i++)
 	{
-		cout << ("\nSALES MISSED: " + to_string(salesMissed[i]) + "in shop " + to_string(i+1)+"\n");
-		cout << ("\nSALES MISSED PER DAY: " + to_string(salesMissed[i] / daysToProcess) + " in shop " + to_string(i + 1) + "\n");
+		cout << fixed << setprecision(0) << ("\nSALES MISSED: ") <<  i << (" in shop ") <<(i+1) << ("\n");
+		cout << fixed << setprecision(4) << ("\nSALES MISSED PER DAY: ") << (salesMissed[i] / daysToProcess) << ( " in shop ") << setprecision(4)<< (i + 1) << ( "\n");
 		total += salesMissed[i];
 		std::cout << ("\n");
 	}
 
+	//output total sales missed
 	std::cout << ("------------------------------------------\n");
 
-	cout << ("\nTOTAl SALES MISSED: " + to_string(total) + "\n");
-	cout << ("\nTOTAL SALES MISSED PER DAY: " + to_string(total/daysToProcess) + "\n");
+	cout << fixed << setprecision(0) << ("\nTOTAl SALES MISSED: ") <<  (total) << "\n";
+	cout << fixed << setprecision(4) << ("\nTOTAL SALES MISSED PER DAY: " + to_string(total/daysToProcess) + "\n");
    
+	
 }
 
 
