@@ -561,6 +561,9 @@ int main()
 
 	cout << fixed << setprecision(0) << ("\nTOTAl SALES MISSED: ") <<  (total) << "\n";
 	cout << fixed << setprecision(4) << ("\nTOTAL SALES MISSED PER DAY: " + to_string(total/daysToProcess) + "\n");
+
+	//dont end straight away
+	cin >> total;
    
 	
 }

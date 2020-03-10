@@ -4,7 +4,7 @@ class Seller
 	
 private:
 	
-
+	//data about seller
 	float stock;
 	float maxStock;
 	float salesPerDay;
@@ -14,6 +14,7 @@ public:
 	Seller();
 	Seller(float max, float spd, float travel);
 
+	//getters and setters
 	float GetStock() { return stock; }
 	void SetStock(float s) { stock = s; }
 	void AddStock(float s) { stock += s; }

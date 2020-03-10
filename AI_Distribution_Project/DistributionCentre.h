@@ -3,6 +3,8 @@
 
 
 using namespace std;
+
+//phase of lorry
 enum Phase
 {
 	IDLE = 0,
@@ -12,6 +14,7 @@ enum Phase
 };
 
 
+//lorry data
 struct Lorry
 {
 	float daysUntilArrive;
@@ -35,8 +38,9 @@ public:
 
 	DistributionCentre(float max, float startingStock, Lorry l, int numOfLorries);
 	
-	vector<Lorry> lorries;
+	vector<Lorry> lorries; //lorries
 
+	//getters and setter
 	void AddStock(float s) { currentStock += s; }
 	void RemoveStock(float s) { currentStock -= s; }
 	float GetCurrentStock() { return currentStock; }

@@ -4,6 +4,7 @@ Seller::Seller()
 {
 }
 
+//constructor
 Seller::Seller(float max, float spd, float travel)
 {
 
@@ -13,6 +14,7 @@ Seller::Seller(float max, float spd, float travel)
 	stock = maxStock / 2;
 }
 
+//return percentage full value
 float Seller::GetPercentageFull()
 {
 	return ((stock / maxStock) * 100.0f);
